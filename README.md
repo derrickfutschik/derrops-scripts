@@ -44,17 +44,17 @@ AI-powered git commit message generator that creates conventional commit message
 
 The script generates messages following conventional commits with emoji prefixes:
 
-- ( `feat`: New features
-- = `fix`: Bug fixes
-- =� `docs`: Documentation changes
-- { `refactor`: Code refactoring
-- <� `style`: Code style/formatting
-- � `perf`: Performance improvements
--  `test`: Tests
-- =' `chore`: Configuration/tooling
-- =� `deploy`: Deployments
-- =% `remove`: Removing code/files
-- =� `breaking`: Breaking changes
+- ✨ `feat`: New features
+- 🐛 `fix`: Bug fixes
+- 📝 `docs`: Documentation changes
+- ♻️ `refactor`: Code refactoring
+- 🎨 `style`: Code style/formatting
+- ⚡ `perf`: Performance improvements
+- ✅ `test`: Tests
+- 🔧 `chore`: Configuration/tooling
+- 🚀 `deploy`: Deployments
+- 🔥 `remove`: Removing code/files
+- 💥 `breaking`: Breaking changes
 
 ## Installation
 
