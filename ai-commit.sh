@@ -253,14 +253,23 @@ fi
 ORIGINAL_CONTENT=$(cat "$TEMP_MSG")
 
 # Open in user's editor (prioritize vim, then fall back to git's core.editor, then EDITOR, then vi)
+# Capture the exit status to detect if the user aborted (e.g., vim :q!)
+EDITOR_EXIT_STATUS=0
 if command -v vim &> /dev/null; then
-    vim "$TEMP_MSG"
+    vim "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
 elif [ -n "$(git config core.editor)" ]; then
-    $(git config core.editor) "$TEMP_MSG"
+    $(git config core.editor) "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
 elif [ -n "$EDITOR" ]; then
-    $EDITOR "$TEMP_MSG"
+    $EDITOR "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
 else
-    vi "$TEMP_MSG"
+    vi "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
+fi
+
+# Check if the editor exited with an error (user aborted with :q! or similar)
+if [ $EDITOR_EXIT_STATUS -ne 0 ]; then
+    echo -e "${YELLOW}Commit aborted: editor exited with error${NC}"
+    rm -f "$TEMP_MSG"
+    exit 1
 fi
 
 # Read the edited content, removing comment lines and empty lines
