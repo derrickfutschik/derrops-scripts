@@ -249,27 +249,30 @@ if git ls-files --others --exclude-standard | grep -q .; then
     git ls-files --others --exclude-standard | sed 's/^/# /' >> "$TEMP_MSG"
 fi
 
-# Store the original content to detect if user made changes
+# Store the original content and modification time to detect if user made changes
 ORIGINAL_CONTENT=$(cat "$TEMP_MSG")
+ORIGINAL_MTIME=$(stat -f %m "$TEMP_MSG" 2>/dev/null || stat -c %Y "$TEMP_MSG" 2>/dev/null)
 
 # Open in user's editor (prioritize vim, then fall back to git's core.editor, then EDITOR, then vi)
-# Capture the exit status to detect if the user aborted (e.g., vim :q!)
-EDITOR_EXIT_STATUS=0
 if command -v vim &> /dev/null; then
-    vim "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
+    vim "$TEMP_MSG"
 elif [ -n "$(git config core.editor)" ]; then
-    $(git config core.editor) "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
+    $(git config core.editor) "$TEMP_MSG"
 elif [ -n "$EDITOR" ]; then
-    $EDITOR "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
+    $EDITOR "$TEMP_MSG"
 else
-    vi "$TEMP_MSG" || EDITOR_EXIT_STATUS=$?
+    vi "$TEMP_MSG"
 fi
 
-# Check if the editor exited with an error (user aborted with :q! or similar)
-if [ $EDITOR_EXIT_STATUS -ne 0 ]; then
-    echo -e "${YELLOW}Commit aborted: editor exited with error${NC}"
-    rm -f "$TEMP_MSG"
-    exit 1
+# Check if the file was modified (if not, user likely aborted without saving)
+NEW_MTIME=$(stat -f %m "$TEMP_MSG" 2>/dev/null || stat -c %Y "$TEMP_MSG" 2>/dev/null)
+if [ "$ORIGINAL_MTIME" = "$NEW_MTIME" ]; then
+    NEW_CONTENT=$(cat "$TEMP_MSG")
+    if [ "$ORIGINAL_CONTENT" = "$NEW_CONTENT" ]; then
+        echo -e "${YELLOW}Commit aborted: no changes made to commit message${NC}"
+        rm -f "$TEMP_MSG"
+        exit 1
+    fi
 fi
 
 # Read the edited content, removing comment lines and empty lines
